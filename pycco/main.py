@@ -279,11 +279,19 @@ languages = {
 
     ".sql": { "name": "sql", "symbol": "--" },
 
-    ".c":   { "name": "c", "symbol": "//"},
+    ".c":   { "name": "javascript", "symbol": "//",
+        "multistart": "/*", "multiend": "*/"},
 
-    ".cpp": { "name": "cpp", "symbol": "//"},
+    ".cpp": { "name": "javascript", "symbol": "//",
+        "multistart": "/*", "multiend": "*/"},
+
+    ".m": { "name": "javascript", "symbol": "//",
+        "multistart": "/*", "multiend": "*/"},
 
     ".js": { "name": "javascript", "symbol": "//",
+        "multistart": "/*", "multiend": "*/"},
+
+    ".go": { "name": "javascript", "symbol": "//",
         "multistart": "/*", "multiend": "*/"},
 
     ".rb": { "name": "ruby", "symbol": "#",
