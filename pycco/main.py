@@ -116,7 +116,10 @@ def parse(source, code):
 
         elif multi_line:
             # Remove leading spaces
-            docs_text += line[len(indent_level):] + '\n'
+            if re.match(r' {%d}' % len(indent_level), line):
+                docs_text += line[len(indent_level):] + '\n'
+            else:
+                docs_text += line + '\n'
 
         elif re.match(language["comment_matcher"], line):
             if has_code:
@@ -180,7 +183,7 @@ def preprocess(comment, section_nr, preserve_paths=True, outdir=None):
         }
 
     comment = re.sub('^([=]+)([^=]+)[=]*\s*$', replace_section_name, comment)
-    comment = re.sub('[^`]\[\[(.+)\]\]', replace_crossref, comment)
+    comment = re.sub('[^`]\[\[(.+?)\]\]', replace_crossref, comment)
 
     return comment
 
@@ -273,7 +276,8 @@ from pygments import lexers, formatters
 # the name of the Pygments lexer and the symbol that indicates a comment. To
 # add another language to Pycco's repertoire, add it here.
 languages = {
-    ".coffee": { "name": "coffee-script", "symbol": "#" },
+    ".coffee": { "name": "coffee-script", "symbol": "#",
+        "multistart": '###', "multiend": '###' },
 
     ".pl":  { "name": "perl", "symbol": "#" },
 
@@ -328,9 +332,10 @@ for ext, l in languages.items():
 def get_language(source):
     """Get the current language we're documenting, based on the extension."""
 
-    try:
-        return languages[ source[source.rindex("."):] ]
-    except KeyError:
+    m = re.match(r'.*(\..+)', os.path.basename(source))
+    if m and m.group(1) in languages:
+        return languages[m.group(1)]
+    else:
         source = open(source, "r")
         code = source.read()
         source.close()
@@ -347,14 +352,15 @@ def destination(filepath, preserve_paths=True, outdir=None):
     source is `lib/example.py`, the HTML will be at `docs/example.html`
     """
 
+    dirname, filename = path.split(filepath)
     if not outdir:
         raise TypeError("Missing the required 'outdir' keyword argument.")
     try:
-        name = re.sub(r"\.[^.]*$", "", filepath)
+        name = re.sub(r"\.[^.]*$", "", filename)
     except ValueError:
-        name = filepath
-    if not preserve_paths:
-        name = path.basename(name)
+        name = filename
+    if preserve_paths:
+        name = path.join(dirname, name)
     return path.join(outdir, "%s.html" % name)
 
 def shift(list, default):
@@ -415,7 +421,7 @@ def process(sources, preserve_paths=True, outdir=None):
             except OSError:
                 pass
 
-            with open(destination(s, preserve_paths=preserve_paths, outdir=outdir), "w") as f:
+            with open(dest, "w") as f:
                 f.write(generate_documentation(s, preserve_paths=preserve_paths, outdir=outdir))
 
             print "pycco = %s -> %s" % (s, dest)
